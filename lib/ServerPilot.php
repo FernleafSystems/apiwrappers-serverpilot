@@ -124,16 +124,19 @@ class ServerPilot {
 	 * @param string        Password of the new user. If user has no password, they will not be able to log in. No
 	 *                               leading or trailing whitespace is allowed, must be at least 8 characters in
 	 *                               length.
-	 *
+	 * @param string $sshKeyId
 	 * @return mixed
 	 */
-	public function sysuser_create( $id, $name, $password = null ) {
+	public function sysuser_create( string $id, string $name, ?string $password = null, ?string $sshKeyId = null ) {
 		$params = [
 			'serverid' => $id,
 			'name'     => $name
 		];
 		if ( $password ) {
 			$params[ 'password' ] = $password;
+		}
+		if ( !empty( $sshKeyId ) ) {
+			$params[ 'sshkey_id' ] = $sshKeyId;
 		}
 
 		return $this->_send_request( 'sysusers', $params, ServerPilot::SP_HTTP_METHOD_POST );
@@ -175,7 +178,6 @@ class ServerPilot {
 
 	/**
 	 * Retrieve list of all apps
-	 *
 	 */
 	public function app_list() {
 		return $this->_send_request( 'apps' );
