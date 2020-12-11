@@ -12,6 +12,11 @@
   "license":     "MIT",
   "authors":     [
     {
+      "name":     "Paul Goodchild",
+      "email":    "paul@paulgoodchild.me",
+      "homepage": "https://paulgoodchild.me"
+    },
+    {
       "name":  "Dave Rogers",
       "email": "redcore@gmail.com"
     }
@@ -21,9 +26,9 @@
     "ext-curl": "*",
     "ext-json": "*"
   },
-  "autoload":    {
-    "psr-0": {
-      "": "lib/"
+  "autoload":     {
+    "psr-4": {
+      "FernleafSystems\\ApiWrappers\\ServerPilot\\": "src"
     }
   }
 }
