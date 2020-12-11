@@ -11,7 +11,6 @@ namespace FernleafSystems\ApiWrappers\ServerPilot;
  * @author         Dave Rogers <redcore@gmail.com>
  * @contributor    m0byd1ck (https://github.com/m0byd1ck)
  */
-
 class ServerPilot {
 
 	// variables
@@ -34,10 +33,10 @@ class ServerPilot {
 
 	public function __construct( $config = [] ) {
 		if ( empty( $config ) ) {
-			throw new Exception( ServerPilot::SP_MISSING_CONFIG );
+			throw new \Exception( ServerPilot::SP_MISSING_CONFIG );
 		}
 		if ( !isset( $config[ 'id' ] ) || !isset( $config[ 'key' ] ) ) {
-			throw new Exception( ServerPilot::SP_MISSING_API );
+			throw new \Exception( ServerPilot::SP_MISSING_API );
 		}
 
 		$this->apiID = $config[ 'id' ];
@@ -110,8 +109,56 @@ class ServerPilot {
 	}
 
 	/**
-	 * Retrieve list of all system users
-	 *
+	 * Retrieve list of all SSH Keys on the account
+	 * @return mixed
+	 * @throws ServerPilotException
+	 */
+	public function sshkeys_list() {
+		return $this->_send_request( 'sshkeys' );
+	}
+
+	/**
+	 * Add a new SSH Key to the account
+	 * @param string $name
+	 * @param string $publicKey
+	 * @return mixed
+	 * @throws ServerPilotException
+	 */
+	public function sshkeys_add( string $name, string $publicKey ) {
+		return $this->_send_request(
+			'sshkeys',
+			[
+				'name'       => $name,
+				'public_key' => $publicKey,
+			],
+			ServerPilot::SP_HTTP_METHOD_POST
+		);
+	}
+
+	/**
+	 * Retrieve SSH Key on-account by its ID
+	 * @param string $id
+	 * @return mixed
+	 * @throws ServerPilotException
+	 */
+	public function sshkeys_retrieve( string $id ) {
+		return $this->_send_request( 'sshkeys/'.$id );
+	}
+
+	/**
+	 * Rename an SSH Key on-account by its ID
+	 * @param string $id
+	 * @param string $name
+	 * @return mixed
+	 * @throws ServerPilotException
+	 */
+	public function sshkeys_rename( string $id, string $name ) {
+		return $this->_send_request( 'sshkeys/'.$id, [ 'name' => $name ], self::SP_HTTP_METHOD_POST );
+	}
+
+	/**
+	 * @return mixed
+	 * @throws ServerPilotException
 	 */
 	public function sysuser_list() {
 		return $this->_send_request( 'sysusers' );
@@ -146,9 +193,9 @@ class ServerPilot {
 
 	/**
 	 * Retrieve information on an existing system user
-	 *
-	 * @param string        ID of the system user
+	 * @param $id
 	 * @return mixed
+	 * @throws ServerPilotException
 	 */
 	public function sysuser_info( $id ) {
 		return $this->_send_request( "sysusers/$id" );
@@ -156,26 +203,64 @@ class ServerPilot {
 
 	/**
 	 * Delete a system user
-	 *
-	 * @param string        ID of the system user
+	 * @param string $id
 	 * @return mixed
+	 * @throws ServerPilotException
 	 */
-	public function sysuser_delete( $id ) {
+	public function sysuser_delete( string $id ) {
 		return $this->_send_request( "sysusers/$id", [], ServerPilot::SP_HTTP_METHOD_DELETE );
 	}
 
 	/**
-	 * Update a system user
-	 *
-	 * @param string        ID of the system user
-	 * @param string        New password of the App user. No leading or trailing whitespace is allowed, must be at
-	 *                          least 8 characters in length.
+	 * @param string $id
+	 * @param string $password   - New password of the App user. No leading or trailing whitespace is allowed, must be
+	 *                           at least 8 characters in length.
 	 * @return mixed
+	 * @throws ServerPilotException
 	 */
-	public function sysuser_update( $id, $password ) {
-		$params[ 'password' ] = $password;
+	public function sysuser_update( string $id, string $password ) {
+		return $this->_send_request(
+			"sysusers/$id",
+			[ 'password' => $password ],
+			ServerPilot::SP_HTTP_METHOD_POST
+		);
+	}
 
-		return $this->_send_request( "sysusers/$id", $params, ServerPilot::SP_HTTP_METHOD_POST );
+	/**
+	 * @param string $userID
+	 * @param string $sshKeyID
+	 * @return mixed
+	 * @throws ServerPilotException
+	 */
+	public function sysuser_sshkey_add( string $userID, string $sshKeyID ) {
+		return $this->_send_request(
+			sprintf( 'sysusers/%s/sshkeys', $userID ),
+			[ 'sshkey_id' => $sshKeyID ],
+			ServerPilot::SP_HTTP_METHOD_POST
+		);
+	}
+
+	/**
+	 * @param string $userID
+	 * @param string $sshKeyID
+	 * @return mixed
+	 * @throws ServerPilotException
+	 */
+	public function sysuser_sshkey_remove( string $userID, string $sshKeyID ) {
+		return $this->_send_request(
+			sprintf( 'sysusers/%s/sshkeys/%s', $userID, $sshKeyID ),
+			[],
+			ServerPilot::SP_HTTP_METHOD_DELETE
+		);
+	}
+
+	/**
+	 * @param string $userID
+	 * @return mixed
+	 * @throws ServerPilotException
+	 */
+	public function sysuser_sshkey_list( string $userID ) {
+		return $this->_send_request( "sysusers/$userID/sshkeys" );
 	}
 
 	/**
@@ -268,11 +353,7 @@ class ServerPilot {
 	 * @see https://github.com/ServerPilot/API#enable-autossl
 	 */
 	public function ssl_auto( $id ) {
-		$params = [
-			'auto' => true
-		];
-
-		return $this->_send_request( "apps/$id/ssl", $params, ServerPilot::SP_HTTP_METHOD_POST );
+		return $this->_send_request( "apps/$id/ssl", [ 'auto' => true ], ServerPilot::SP_HTTP_METHOD_POST );
 	}
 
 	/**
@@ -285,24 +366,24 @@ class ServerPilot {
 	 *
 	 * @return mixed
 	 */
-	public function ssl_add( $id, $key, $cert, $cacerts = null ) {
-		$params = [
-			'key'     => $key,
-			'cert'    => $cert,
-			'cacerts' => $cacerts
-		];
-
-		return $this->_send_request( "apps/$id/ssl", $params, ServerPilot::SP_HTTP_METHOD_POST );
+	public function ssl_add( string $id, $key, $cert, $cacerts = null ) {
+		return $this->_send_request(
+			"apps/$id/ssl",
+			[
+				'key'     => $key,
+				'cert'    => $cert,
+				'cacerts' => $cacerts
+			],
+			ServerPilot::SP_HTTP_METHOD_POST
+		);
 	}
 
 	/**
 	 * Delete an SSL cert for an app - requires Coach or Business plan
-	 *
 	 * @param string        ID of the app
-	 *
 	 * @return mixed
 	 */
-	public function ssl_delete( $id ) {
+	public function ssl_delete( string $id ) {
 		return $this->_send_request( "apps/$id/ssl", [], ServerPilot::SP_HTTP_METHOD_DELETE );
 	}
 
@@ -313,12 +394,12 @@ class ServerPilot {
 	 * @param $force
 	 * @return mixed
 	 */
-	public function ssl_force( $id, $force ) {
-		$params = [
-			'force' => $force,
-		];
-
-		return $this->_send_request( "apps/$id/ssl", $params, ServerPilot::SP_HTTP_METHOD_POST );
+	public function ssl_force( string $id, $force ) {
+		return $this->_send_request(
+			"apps/$id/ssl",
+			[ 'force' => $force ],
+			ServerPilot::SP_HTTP_METHOD_POST
+		);
 	}
 
 	/**
@@ -352,18 +433,19 @@ class ServerPilot {
 	 *
 	 * @return mixed
 	 */
-	public function database_create( $id, $name, $username, $password ) {
-		$user = new stdClass();
+	public function database_create( string $id, string $name, string $username, string $password ) {
+		$user = new \stdClass();
 		$user->name = $username;
 		$user->password = $password;
 
-		$params = [
-			'appid' => $id,
-			'name'  => $name,
-			'user'  => $user
-		];
-
-		return $this->_send_request( 'dbs', $params, ServerPilot::SP_HTTP_METHOD_POST );
+		return $this->_send_request( 'dbs',
+			[
+				'appid' => $id,
+				'name'  => $name,
+				'user'  => $user
+			],
+			ServerPilot::SP_HTTP_METHOD_POST
+		);
 	}
 
 	/**
@@ -388,24 +470,20 @@ class ServerPilot {
 	 * @return mixed
 	 */
 	public function database_update( $id, $userid, $password ) {
-		$user = new stdClass();
+		$user = new \stdClass();
 		$user->id = $userid;
 		$user->password = $password;
 
-		$params[ 'user' ] = $user;
-
-		return $this->_send_request( "dbs/$id", $params, ServerPilot::SP_HTTP_METHOD_POST );
+		return $this->_send_request( "dbs/$id", [ 'user' => $user ], ServerPilot::SP_HTTP_METHOD_POST );
 	}
 
 	/**
-	 * Retrieve information on a particular action
-	 *
-	 * @param string        ID of the action
-	 *
+	 * @param string $actionID
 	 * @return mixed
+	 * @throws ServerPilotException
 	 */
-	public function action_info( $id ) {
-		return $this->_send_request( "actions/$id" );
+	public function action_info( string $actionID ) {
+		return $this->_send_request( "actions/$actionID" );
 	}
 
 	/**
@@ -464,28 +542,20 @@ class ServerPilot {
 		switch ( $http_status ) {
 			case 400:
 				throw new ServerPilotException( 'We couldn\'t understand your request. Typically missing a parameter or header.', $http_status );
-				break;
 			case 401:
 				throw new ServerPilotException( 'Either no authentication credentials were provided or they are invalid.', $http_status );
-				break;
 			case 402:
 				throw new ServerPilotException( 'Method is restricted to users on the Coach or Business plan.', $http_status );
-				break;
 			case 403:
 				throw new ServerPilotException( 'Forbidden.', $http_status );
-				break;
 			case 404:
 				throw new ServerPilotException( 'You requested a resource that does not exist.', $http_status );
-				break;
 			case 409:
 				throw new ServerPilotException( 'Typically when trying creating a resource that already exists.', $http_status );
-				break;
 			case 500:
 				throw new ServerPilotException( 'Something unexpected happened on ServerPilot\'s end.', $http_status );
-				break;
 			default:
 				throw new ServerPilotException( 'Unknown error.', $http_status );
-				break;
 		}
 	}
 }
