@@ -1,5 +1,7 @@
 <?php
 
+namespace FernleafSystems\ApiWrappers\ServerPilot;
+
 /**
  * PHP library to access ServerPilot.io services
  *
@@ -412,7 +414,7 @@ class ServerPilot {
 	 * @param string string     $http_method
 	 *
 	 * @return mixed
-	 * @throws \ServerPilotException
+	 * @throws ServerPilotException
 	 */
 	private function _send_request( $url_segs, $params = [], $http_method = 'get' ) {
 		// Initialize and configure the request
