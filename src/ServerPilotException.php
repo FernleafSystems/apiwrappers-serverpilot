@@ -1,4 +1,6 @@
-<?php
+<?php declare( strict_types=1 );
+
+namespace FernleafSystems\ApiWrappers\ServerPilot;
 
 /**
  * PHP library to access ServerPilot.io services
@@ -8,6 +10,6 @@
  * @version        1.0.2
  * @author         Maxim Kestens <maxim.kerstens@gmail.com>
  */
-class ServerPilotException extends Exception {
+class ServerPilotException extends \Exception {
 
 }
